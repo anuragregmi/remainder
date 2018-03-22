@@ -1,0 +1,116 @@
+#!/usr/bin/python
+
+
+from PyQt4 import QtCore, QtGui
+from datetime import datetime
+import json
+import os
+
+STORE_DIR = os.path.dirname(os.path.realpath(__file__)) + "/store/"
+
+try:
+    _fromUtf8 = QtCore.QString.fromUtf8
+except AttributeError:
+    def _fromUtf8(s):
+        return s
+
+try:
+    _encoding = QtGui.QApplication.UnicodeUTF8
+
+
+    def _translate(context, text, disambig):
+        return QtGui.QApplication.translate(context, text, disambig, _encoding)
+except AttributeError:
+    def _translate(context, text, disambig):
+        return QtGui.QApplication.translate(context, text, disambig)
+
+
+class UiForm(object):
+    def setupUi(self, Form):
+        Form.setObjectName(_fromUtf8("Form"))
+        Form.resize(461, 300)
+        self.horizontalLayoutWidget = QtGui.QWidget(Form)
+        self.horizontalLayoutWidget.setGeometry(QtCore.QRect(-1, -1, 461, 51))
+        self.horizontalLayoutWidget.setObjectName(
+            _fromUtf8("horizontalLayoutWidget"))
+        self.horizontalLayout = QtGui.QHBoxLayout(self.horizontalLayoutWidget)
+        self.horizontalLayout.setMargin(0)
+        self.horizontalLayout.setObjectName(_fromUtf8("horizontalLayout"))
+        self.dateEdit = QtGui.QDateEdit(self.horizontalLayoutWidget)
+        self.dateEdit.setObjectName(_fromUtf8("dateEdit"))
+        self.dateEdit.setDisplayFormat("yyyy-MM-dd")
+        self.dateEdit.dateChanged.connect(self.onDateChanged)
+        self.horizontalLayout.addWidget(self.dateEdit)
+        self.lcdNumber = QtGui.QLCDNumber(self.horizontalLayoutWidget)
+        self.lcdNumber.setProperty("intValue", 23)
+        self.lcdNumber.setObjectName(_fromUtf8("lcdNumber"))
+        self.horizontalLayout.addWidget(self.lcdNumber)
+        self.label = QtGui.QLabel(self.horizontalLayoutWidget)
+        self.label.setObjectName(_fromUtf8("label"))
+        self.horizontalLayout.addWidget(self.label)
+        self.verticalLayoutWidget = QtGui.QWidget(Form)
+        self.verticalLayoutWidget.setGeometry(QtCore.QRect(-1, 49, 461, 251))
+        self.verticalLayoutWidget.setObjectName(
+            _fromUtf8("verticalLayoutWidget"))
+        self.verticalLayout = QtGui.QVBoxLayout(self.verticalLayoutWidget)
+        self.verticalLayout.setMargin(0)
+        self.verticalLayout.setObjectName(_fromUtf8("verticalLayout"))
+        self.textEdit = QtGui.QTextEdit(self.verticalLayoutWidget)
+        self.textEdit.setObjectName(_fromUtf8("textEdit"))
+        self.textEdit.textChanged.connect(self.onTextChanged)
+        self.verticalLayout.addWidget(self.textEdit)
+
+        self.retranslateUi(Form)
+        QtCore.QMetaObject.connectSlotsByName(Form)
+
+    def retranslateUi(self, Form):
+        Form.setWindowTitle(_translate("Form", "Remainder !!", None))
+        self.label.setText(
+            _translate(
+                "Form",
+                "<html><head/><body><p><span style=\" font-size:12pt; "
+                "font-weight:600;\">Days Remaining</span></p></body></html>",
+                None))
+        date = self.loadDate()
+        qt_date = QtCore.QDate(date.year, date.month, date.day)
+        self.dateEdit.setDate(qt_date)
+        self.textEdit.setHtml(self.loadText())
+        self.textEdit.setFocus()
+
+
+    def onDateChanged(self, newDate):
+        days_remaining = (newDate.toPyDate() - datetime.now().date()).days
+        with open(STORE_DIR + 'remainder_date.json', 'w') as file:
+            file.write(json.dumps({'date': newDate.toPyDate().__str__()}))
+            self.lcdNumber.setProperty("intValue", days_remaining)
+
+    def onTextChanged(self):
+        with open(STORE_DIR + 'notes.json', 'w') as file:
+            file.write(json.dumps({'notes': self.textEdit.toHtml()}))
+
+    def loadDate(self):
+        with open(STORE_DIR + 'remainder_date.json','r') as remainder_date_json:
+            remainder_date_str = json.load(remainder_date_json).get('date')
+        if remainder_date_str:
+            return datetime.strptime(remainder_date_str, "%Y-%m-%d")
+        else:
+            return datetime.strptime("2017-12-12", "%Y-%m-%d")
+
+    def loadText(self):
+        with open(STORE_DIR + 'notes.json', 'r') as notes_json:
+            notes = json.load(notes_json).get('notes', None)
+            if not notes:
+                return ""
+            else:
+                return notes
+
+
+if __name__ == "__main__":
+    import sys
+
+    app = QtGui.QApplication(sys.argv)
+    Form = QtGui.QWidget()
+    ui = UiForm()
+    ui.setupUi(Form)
+    Form.show()
+    sys.exit(app.exec_())
