@@ -1,6 +1,8 @@
 #!/usr/bin/python
 
-
+import sip
+sip.setapi('QString', 2)
+sip.setapi('QVariant', 2)
 from PyQt4 import QtCore, QtGui
 from datetime import datetime
 import json
