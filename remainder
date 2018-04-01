@@ -7,6 +7,8 @@ from PyQt4 import QtCore, QtGui
 from datetime import datetime
 import json
 import os
+from components import TextEdit
+from markdown2 import markdown
 
 STORE_DIR = os.path.dirname(os.path.realpath(__file__)) + "/store/"
 
@@ -28,36 +30,51 @@ except AttributeError:
 
 
 class UiForm(object):
+    def __init__(self):
+        self.text = None
+
     def setupUi(self, Form):
         Form.setObjectName(_fromUtf8("Form"))
         Form.resize(461, 300)
+
         self.verticalLayout_2 = QtGui.QVBoxLayout(Form)
         self.verticalLayout_2.setObjectName(_fromUtf8("verticalLayout_2"))
+
         self.horizontalLayout = QtGui.QHBoxLayout()
         self.horizontalLayout.setSizeConstraint(QtGui.QLayout.SetMaximumSize)
         self.horizontalLayout.setObjectName(_fromUtf8("horizontalLayout"))
+
         self.dateEdit = QtGui.QDateEdit(Form)
         self.dateEdit.setObjectName(_fromUtf8("dateEdit"))
         self.dateEdit.setDisplayFormat("yyyy-MM-dd")
         self.dateEdit.dateChanged.connect(self.onDateChanged)
+
         self.horizontalLayout.addWidget(self.dateEdit)
+
         self.lcdNumber = QtGui.QLCDNumber(Form)
         self.lcdNumber.setProperty("intValue", 23)
         self.lcdNumber.setObjectName(_fromUtf8("lcdNumber"))
+
         self.horizontalLayout.addWidget(self.lcdNumber)
+
         self.label = QtGui.QLabel(Form)
         self.label.setObjectName(_fromUtf8("label"))
+
         self.horizontalLayout.addWidget(self.label)
         self.horizontalLayout.setStretch(2, 2)
         self.horizontalLayout.setStretch(1, 2)
         self.horizontalLayout.setStretch(4, 2)
+
         self.verticalLayout_2.addLayout(self.horizontalLayout)
+
         self.verticalLayout = QtGui.QVBoxLayout()
         self.verticalLayout.setSizeConstraint(QtGui.QLayout.SetDefaultConstraint)
         self.verticalLayout.setObjectName(_fromUtf8("verticalLayout"))
-        self.textEdit = QtGui.QTextEdit(Form)
+
+        self.textEdit = TextEdit(Form)
         self.textEdit.setObjectName(_fromUtf8("textEdit"))
-        self.textEdit.textChanged.connect(self.onTextChanged)
+        self.textEdit.setKeyPressHandler(method=self.onKeyPressed)
+
         self.verticalLayout.addWidget(self.textEdit)
         self.verticalLayout_2.addLayout(self.verticalLayout)
 
@@ -75,7 +92,8 @@ class UiForm(object):
         date = self.loadDate()
         qt_date = QtCore.QDate(date.year, date.month, date.day)
         self.dateEdit.setDate(qt_date)
-        self.textEdit.setHtml(self.loadText())
+        self.textEdit.setPlainText(self.loadText())
+        self.textEdit.moveCursor(QtGui.QTextCursor.End)
         self.textEdit.setFocus()
 
 
@@ -84,10 +102,6 @@ class UiForm(object):
         with open(STORE_DIR + 'remainder_date.json', 'w') as file:
             file.write(json.dumps({'date': newDate.toPyDate().__str__()}))
             self.lcdNumber.setProperty("intValue", days_remaining)
-
-    def onTextChanged(self):
-        with open(STORE_DIR + 'notes.json', 'w') as file:
-            file.write(json.dumps({'notes': self.textEdit.toHtml()}))
 
     def loadDate(self):
         with open(STORE_DIR + 'remainder_date.json','r') as remainder_date_json:
@@ -104,6 +118,28 @@ class UiForm(object):
                 return ""
             else:
                 return notes
+
+    def onKeyPressed(self, event):
+
+        if event.key() == QtCore.Qt.Key_Return or event.key() == QtCore.Qt.Key_Enter:
+            text = self.textEdit.toPlainText()
+
+            with open(STORE_DIR + 'notes.json', 'w') as file_:
+                file_.write(json.dumps({'notes': text}))
+
+        elif event.key() == QtCore.Qt.Key_Tab:
+            self.setMarkdown(self.textEdit.toPlainText())
+
+    def setMarkdown(self, text):
+        if self.text:
+            self.textEdit.setPlainText(self.text)
+            self.text = None
+            self.textEdit.moveCursor(QtGui.QTextCursor.End)
+        else:
+            self.text = text
+            markdownText = markdown(text, extras={"tables": None})
+            self.textEdit.setHtml(markdownText)
+            self.textEdit.moveCursor(QtGui.QTextCursor.End)
 
 
 if __name__ == "__main__":
