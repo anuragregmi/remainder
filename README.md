@@ -1,5 +1,5 @@
-# Reminder
-Reminder app in PyQt
+# Remainder
+remainder app in PyQt
 
 ## Installation
 ##### Install qt4 and pyqt4.
@@ -15,7 +15,7 @@ $ pip isntall markdown2
 ```
 #### Clone the repo
 ```
-$ git clone https://github.com/anuragregmi/reminder/
+$ git clone https://github.com/anuragregmi/remainder/
 ```
 #### Change directory
 ```
