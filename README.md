@@ -1,4 +1,4 @@
-# Remainder
+# Reminder
 Reminder app in PyQt
 
 ## Installation
